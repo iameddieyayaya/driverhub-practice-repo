@@ -49,7 +49,57 @@ describe("coding exercises", () => {
     });
   });
 
-  it("02 keeps the newest duplicate", () => expect(deduplicateResults([{ id: "1", name: "old", updatedAt: "2025-01-01" }, { id: "1", name: "new", updatedAt: "2025-02-01" }])).toEqual([{ id: "1", name: "new", updatedAt: "2025-02-01" }]));
+  describe("02 deduplicateResults", () => {
+    it("keeps a newer duplicate when it appears last", () => {
+      const result = deduplicateResults([
+        { id: "1", name: "old", updatedAt: "2025-01-01" },
+        { id: "1", name: "new", updatedAt: "2025-02-01" },
+      ]);
+
+      expect(result).toEqual([
+        { id: "1", name: "new", updatedAt: "2025-02-01" },
+      ]);
+    });
+
+    it("keeps a newer duplicate when it appears first", () => {
+      const result = deduplicateResults([
+        { id: "1", name: "new", updatedAt: "2025-02-01" },
+        { id: "1", name: "old", updatedAt: "2025-01-01" },
+      ]);
+
+      expect(result).toEqual([
+        { id: "1", name: "new", updatedAt: "2025-02-01" },
+      ]);
+    });
+
+    it("preserves first-seen ID order while replacing stale records", () => {
+      const result = deduplicateResults([
+        { id: "2", name: "Miata old", updatedAt: "2025-01-01" },
+        { id: "1", name: "BRZ", updatedAt: "2025-03-01" },
+        { id: "2", name: "Miata new", updatedAt: "2025-04-01" },
+      ]);
+
+      expect(result.map((vehicle) => vehicle.id)).toEqual(["2", "1"]);
+      expect(result[0]).toEqual({
+        id: "2",
+        name: "Miata new",
+        updatedAt: "2025-04-01",
+      });
+    });
+
+    it("does not mutate its input", () => {
+      const items = [
+        { id: "1", name: "old", updatedAt: "2025-01-01" },
+        { id: "1", name: "new", updatedAt: "2025-02-01" },
+      ];
+      const originalItems = structuredClone(items);
+
+      deduplicateResults(items);
+
+      expect(items).toEqual(originalItems);
+    });
+  });
+
   it.todo("03 debounces to latest call", () => { vi.useFakeTimers(); const callback = vi.fn(); const fn = debounce(callback, 100); fn("a"); fn("b"); vi.advanceTimersByTime(100); expect(callback).toHaveBeenCalledWith("b"); vi.useRealTimers(); });
   it.todo("04 retries and returns a later success", async () => { const operation = vi.fn().mockRejectedValueOnce(new Error("no")).mockResolvedValue("yes"); await expect(retryWithBackoff(operation, { attempts: 2, baseDelayMs: 0 })).resolves.toBe("yes"); });
   it.todo("05 paginates one-indexed", () => expect(paginate([1,2,3,4,5], 2, 2)).toEqual({ items: [3,4], page: 2, pageSize: 2, totalItems: 5, totalPages: 3 }));
