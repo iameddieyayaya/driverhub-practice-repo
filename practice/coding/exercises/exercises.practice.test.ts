@@ -185,7 +185,70 @@ describe("coding exercises", () => {
       expect(operation).toHaveBeenCalledTimes(1);
     });
   });
-  it("05 paginates one-indexed", () => expect(paginate([1,2,3,4,5], 2, 2)).toEqual({ items: [3,4], page: 2, pageSize: 2, totalItems: 5, totalPages: 3 }));
+  describe("05 paginate", () => {
+    it("returns a one-indexed page", () => {
+      expect(paginate([1, 2, 3, 4, 5], 1, 2)).toEqual({
+        items: [1, 2],
+        page: 1,
+        pageSize: 2,
+        totalItems: 5,
+        totalPages: 3,
+      });
+    });
+
+    it("returns a partial final page when page and pageSize differ", () => {
+      expect(paginate([1, 2, 3, 4, 5], 2, 3)).toEqual({
+        items: [4, 5],
+        page: 2,
+        pageSize: 3,
+        totalItems: 5,
+        totalPages: 2,
+      });
+    });
+
+    it("returns an empty items array for a page beyond the end", () => {
+      expect(paginate([1, 2, 3], 3, 2)).toEqual({
+        items: [],
+        page: 3,
+        pageSize: 2,
+        totalItems: 3,
+        totalPages: 2,
+      });
+    });
+
+    it("returns zero total pages for an empty input", () => {
+      expect(paginate([], 1, 5)).toEqual({
+        items: [],
+        page: 1,
+        pageSize: 5,
+        totalItems: 0,
+        totalPages: 0,
+      });
+    });
+
+    it.each([
+      { page: 0, pageSize: 2 },
+      { page: -1, pageSize: 2 },
+      { page: 1.5, pageSize: 2 },
+      { page: 1, pageSize: 0 },
+      { page: 1, pageSize: -2 },
+      { page: 1, pageSize: 2.5 },
+    ])(
+      "rejects invalid pagination values: page=$page, pageSize=$pageSize",
+      ({ page, pageSize }) => {
+        expect(() => paginate([1, 2, 3], page, pageSize)).toThrow(RangeError);
+      },
+    );
+
+    it("does not mutate the input", () => {
+      const items = [{ id: "1" }, { id: "2" }, { id: "3" }];
+      const originalItems = structuredClone(items);
+
+      paginate(items, 2, 2);
+
+      expect(items).toEqual(originalItems);
+    });
+  });
   it.todo("06 maps member API data", () => expect(toMemberSummary({ user: { first_name: "Alex", last_name: "Morgan" }, membership: null, vehicles: [] })).toEqual({ displayName: "Alex Morgan", tier: "None", vehicleLabels: [] }));
   it.todo("07 returns all validation errors", () => expect(validateVehicleForm({ year: "1800", make: "", model: "Miata" }, 2026)).toMatchObject({ year: expect.any(String), make: expect.any(String) }));
   it.todo("08 expires cache entries", () => { let now = 0; const cache = createTtlCache<number>(2, () => now); cache.set("a", 1, 10); now = 11; expect(cache.get("a")).toBeUndefined(); });
