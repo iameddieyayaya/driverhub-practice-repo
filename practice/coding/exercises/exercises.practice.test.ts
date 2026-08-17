@@ -100,9 +100,92 @@ describe("coding exercises", () => {
     });
   });
 
-  it.todo("03 debounces to latest call", () => { vi.useFakeTimers(); const callback = vi.fn(); const fn = debounce(callback, 100); fn("a"); fn("b"); vi.advanceTimersByTime(100); expect(callback).toHaveBeenCalledWith("b"); vi.useRealTimers(); });
-  it.todo("04 retries and returns a later success", async () => { const operation = vi.fn().mockRejectedValueOnce(new Error("no")).mockResolvedValue("yes"); await expect(retryWithBackoff(operation, { attempts: 2, baseDelayMs: 0 })).resolves.toBe("yes"); });
-  it.todo("05 paginates one-indexed", () => expect(paginate([1,2,3,4,5], 2, 2)).toEqual({ items: [3,4], page: 2, pageSize: 2, totalItems: 5, totalPages: 3 }));
+  it("03 debounces to latest call", () => { vi.useFakeTimers(); const callback = vi.fn(); const fn = debounce(callback, 100); fn("a"); fn("b"); vi.advanceTimersByTime(100); expect(callback).toHaveBeenCalledWith("b"); vi.useRealTimers(); });
+  describe("04 retryWithBackoff", () => {
+    it("retries and returns a later success", async () => {
+      const operation = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("first failure"))
+        .mockResolvedValue("yes");
+
+      await expect(
+        retryWithBackoff(operation, { attempts: 2, baseDelayMs: 0 }),
+      ).resolves.toBe("yes");
+      expect(operation).toHaveBeenCalledTimes(2);
+    });
+
+    it("uses exponential backoff between attempts", async () => {
+      vi.useFakeTimers();
+
+      try {
+        const operation = vi
+          .fn()
+          .mockRejectedValueOnce(new Error("first failure"))
+          .mockRejectedValueOnce(new Error("second failure"))
+          .mockResolvedValue("yes");
+
+        const resultPromise = retryWithBackoff(operation, {
+          attempts: 3,
+          baseDelayMs: 100,
+        });
+
+        await vi.advanceTimersByTimeAsync(99);
+        expect(operation).toHaveBeenCalledTimes(1);
+
+        await vi.advanceTimersByTimeAsync(1);
+        expect(operation).toHaveBeenCalledTimes(2);
+
+        await vi.advanceTimersByTimeAsync(199);
+        expect(operation).toHaveBeenCalledTimes(2);
+
+        await vi.advanceTimersByTimeAsync(1);
+        await expect(resultPromise).resolves.toBe("yes");
+        expect(operation).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("throws the last error after exhausting all attempts", async () => {
+      const firstError = new Error("first failure");
+      const lastError = new Error("last failure");
+      const operation = vi
+        .fn()
+        .mockRejectedValueOnce(firstError)
+        .mockRejectedValueOnce(lastError);
+
+      await expect(
+        retryWithBackoff(operation, { attempts: 2, baseDelayMs: 0 }),
+      ).rejects.toBe(lastError);
+      expect(operation).toHaveBeenCalledTimes(2);
+    });
+
+    it("stops immediately when shouldRetry returns false", async () => {
+      const error = new Error("do not retry");
+      const operation = vi.fn().mockRejectedValue(error);
+      const shouldRetry = vi.fn().mockReturnValue(false);
+
+      await expect(
+        retryWithBackoff(operation, {
+          attempts: 3,
+          baseDelayMs: 0,
+          shouldRetry,
+        }),
+      ).rejects.toBe(error);
+      expect(operation).toHaveBeenCalledTimes(1);
+      expect(shouldRetry).toHaveBeenCalledWith(error);
+    });
+
+    it("returns a successful falsy result without retrying", async () => {
+      const operation = vi.fn().mockResolvedValue(0);
+
+      await expect(
+        retryWithBackoff(operation, { attempts: 3, baseDelayMs: 0 }),
+      ).resolves.toBe(0);
+      expect(operation).toHaveBeenCalledTimes(1);
+    });
+  });
+  it("05 paginates one-indexed", () => expect(paginate([1,2,3,4,5], 2, 2)).toEqual({ items: [3,4], page: 2, pageSize: 2, totalItems: 5, totalPages: 3 }));
   it.todo("06 maps member API data", () => expect(toMemberSummary({ user: { first_name: "Alex", last_name: "Morgan" }, membership: null, vehicles: [] })).toEqual({ displayName: "Alex Morgan", tier: "None", vehicleLabels: [] }));
   it.todo("07 returns all validation errors", () => expect(validateVehicleForm({ year: "1800", make: "", model: "Miata" }, 2026)).toMatchObject({ year: expect.any(String), make: expect.any(String) }));
   it.todo("08 expires cache entries", () => { let now = 0; const cache = createTtlCache<number>(2, () => now); cache.set("a", 1, 10); now = 11; expect(cache.get("a")).toBeUndefined(); });
