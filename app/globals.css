@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #13252f;
+  --color-ink-soft: #28414e;
+  --color-road: #e3522f;
+  --color-road-dark: #bd3b1c;
+  --color-paper: #f4f6f5;
+  --color-panel: #ffffff;
+  --color-metal: #d7dedf;
+  --color-muted: #687980;
+  --color-mint: #c5ded2;
+  --color-sun: #f2c14e;
+  --font-display: "Arial Narrow", "Avenir Next Condensed", Impact, sans-serif;
+  --font-body: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --shadow-card: 0 12px 32px rgba(19, 37, 47, 0.08);
+  --radius-panel: 1.25rem;
+  --animate-enter: enter 420ms cubic-bezier(.2,.8,.2,1) both;
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+}
+
+@layer base {
+  * { border-color: var(--color-metal); }
+  html { background: var(--color-paper); }
+  body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); }
+  h1, h2, h3 { text-wrap: balance; }
+  button, a, input { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 3px solid color-mix(in srgb, var(--color-road) 55%, transparent); outline-offset: 3px; }
+}
+
+@layer utilities {
+  .display-type { font-family: var(--font-display); font-stretch: condensed; letter-spacing: -0.025em; text-transform: uppercase; }
+  .data-type { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+  .route-grid { background-image: linear-gradient(rgba(19,37,47,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(19,37,47,.045) 1px, transparent 1px); background-size: 24px 24px; }
+  .garage-strip { background: repeating-linear-gradient(135deg, #13252f 0 14px, #1d3440 14px 28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

@@ -1,0 +1,5 @@
+aws_region      = "us-west-2"
+project_name    = "driverhub"
+environment     = "practice"
+container_image = "123456789012.dkr.ecr.us-west-2.amazonaws.com/driverhub:example"
+db_password     = "replace-me-do-not-commit"

@@ -1,0 +1,61 @@
+{
+  "name": "driverhub-interview-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A production-minded full-stack interview practice environment for an automotive member portal.",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir tests --exclude='integration/**'",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --dir tests/integration",
+    "test:practice": "vitest run --dir practice/coding",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "ci": "npm run lint && npm run typecheck && npm test && npm run test:integration && npm run build"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "bcryptjs": "3.0.2",
+    "clsx": "2.1.1",
+    "dotenv": "17.2.3",
+    "graphql": "16.11.0",
+    "graphql-yoga": "5.16.2",
+    "jose": "6.1.0",
+    "lucide-react": "0.539.0",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tailwind-merge": "3.3.1",
+    "zod": "4.0.17"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@tailwindcss/postcss": "4.1.12",
+    "@testing-library/jest-dom": "6.8.0",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "22.17.2",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "eslint": "9.33.0",
+    "eslint-config-next": "16.3.1",
+    "jsdom": "26.1.0",
+    "postcss": "8.5.26",
+    "prisma": "6.19.3",
+    "tailwindcss": "4.1.12",
+    "tsx": "4.20.4",
+    "typescript": "5.9.2",
+    "vitest": "3.2.7"
+  }
+}

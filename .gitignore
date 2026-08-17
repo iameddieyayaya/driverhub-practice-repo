@@ -1,0 +1,13 @@
+node_modules
+.next
+.env
+.env.local
+coverage
+playwright-report
+test-results
+*.log
+*.tsbuildinfo
+prisma/*.db
+.terraform
+*.tfstate*
+terraform.tfvars

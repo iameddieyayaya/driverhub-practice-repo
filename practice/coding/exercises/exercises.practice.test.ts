@@ -1,0 +1,63 @@
+import { describe, expect, it, vi } from "vitest";
+import { groupVehiclesByMake } from "./01-group-vehicles";
+import { deduplicateResults } from "./02-deduplicate-results";
+import { debounce } from "./03-debounce";
+import { retryWithBackoff } from "./04-retry-backoff";
+import { paginate } from "./05-paginate";
+import { toMemberSummary } from "./06-transform-api-data";
+import { validateVehicleForm } from "./07-validate-vehicle";
+import { createTtlCache } from "./08-ttl-cache";
+import { mapWithConcurrency } from "./09-concurrent-promises";
+import { TimeoutError, withTimeout } from "./10-timeout";
+import { filterEventsByDate } from "./11-filter-events";
+import { mergePreferences } from "./12-merge-preferences";
+
+describe("coding exercises", () => {
+  describe("01 groupVehiclesByMake", () => {
+    it("groups makes case-insensitively", () => {
+      const result = groupVehiclesByMake([
+        { id: "1", make: "Mazda", model: "Miata" },
+        { id: "2", make: "mazda", model: "RX-7" },
+      ]);
+
+      expect(result.Mazda.map((vehicle) => vehicle.id)).toEqual(["1", "2"]);
+    });
+
+    it("trims whitespace and groups uppercase variants together", () => {
+      const result = groupVehiclesByMake([
+        { id: "1", make: "Mazda", model: "Miata" },
+        { id: "2", make: " mazda ", model: "RX-7" },
+        { id: "3", make: "MAZDA", model: "CX-50" },
+      ]);
+
+      expect(Object.keys(result)).toEqual(["Mazda"]);
+      expect(result.Mazda.map((vehicle) => vehicle.id)).toEqual(["1", "2", "3"]);
+    });
+
+    it("preserves the first trimmed spelling and does not mutate its input", () => {
+      const vehicles = [
+        { id: "1", make: " BMW ", model: "M3" },
+        { id: "2", make: "bmw", model: "M5" },
+      ];
+      const originalVehicles = structuredClone(vehicles);
+
+      const result = groupVehiclesByMake(vehicles);
+
+      expect(Object.keys(result)).toEqual(["BMW"]);
+      expect(result.BMW.map((vehicle) => vehicle.id)).toEqual(["1", "2"]);
+      expect(vehicles).toEqual(originalVehicles);
+    });
+  });
+
+  it("02 keeps the newest duplicate", () => expect(deduplicateResults([{ id: "1", name: "old", updatedAt: "2025-01-01" }, { id: "1", name: "new", updatedAt: "2025-02-01" }])).toEqual([{ id: "1", name: "new", updatedAt: "2025-02-01" }]));
+  it.todo("03 debounces to latest call", () => { vi.useFakeTimers(); const callback = vi.fn(); const fn = debounce(callback, 100); fn("a"); fn("b"); vi.advanceTimersByTime(100); expect(callback).toHaveBeenCalledWith("b"); vi.useRealTimers(); });
+  it.todo("04 retries and returns a later success", async () => { const operation = vi.fn().mockRejectedValueOnce(new Error("no")).mockResolvedValue("yes"); await expect(retryWithBackoff(operation, { attempts: 2, baseDelayMs: 0 })).resolves.toBe("yes"); });
+  it.todo("05 paginates one-indexed", () => expect(paginate([1,2,3,4,5], 2, 2)).toEqual({ items: [3,4], page: 2, pageSize: 2, totalItems: 5, totalPages: 3 }));
+  it.todo("06 maps member API data", () => expect(toMemberSummary({ user: { first_name: "Alex", last_name: "Morgan" }, membership: null, vehicles: [] })).toEqual({ displayName: "Alex Morgan", tier: "None", vehicleLabels: [] }));
+  it.todo("07 returns all validation errors", () => expect(validateVehicleForm({ year: "1800", make: "", model: "Miata" }, 2026)).toMatchObject({ year: expect.any(String), make: expect.any(String) }));
+  it.todo("08 expires cache entries", () => { let now = 0; const cache = createTtlCache<number>(2, () => now); cache.set("a", 1, 10); now = 11; expect(cache.get("a")).toBeUndefined(); });
+  it.todo("09 preserves order under concurrency", async () => expect(mapWithConcurrency([3,1,2], 2, async (n) => n * 2)).resolves.toEqual([6,2,4]));
+  it.todo("10 rejects on timeout", async () => { vi.useFakeTimers(); const result = withTimeout(new Promise(() => undefined), 10); vi.advanceTimersByTime(10); await expect(result).rejects.toBeInstanceOf(TimeoutError); vi.useRealTimers(); });
+  it.todo("11 includes overlapping event boundaries", () => expect(filterEventsByDate([{ id: "1", startDate: "2026-08-10", endDate: "2026-08-12" }], new Date("2026-08-12"), new Date("2026-08-14"))).toHaveLength(1));
+  it.todo("12 merges in precedence order", () => expect(mergePreferences({ emailEnabled: true, smsEnabled: false, eventReminders: true, marketingEnabled: false }, { emailEnabled: false }, { smsEnabled: true })).toMatchObject({ emailEnabled: false, smsEnabled: true }));
+});

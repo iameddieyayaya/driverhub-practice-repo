@@ -1,0 +1,53 @@
+name: DriverHub CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: driverhub
+          POSTGRES_PASSWORD: driverhub
+          POSTGRES_DB: driverhub_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U driverhub -d driverhub_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://driverhub:driverhub@localhost:5432/driverhub_test?schema=public
+      TEST_DATABASE_URL: postgresql://driverhub:driverhub@localhost:5432/driverhub_test?schema=public
+      SESSION_SECRET: ci-only-session-secret-at-least-32-chars
+      APP_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run prisma:seed
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  mock-deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: quality
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - run: echo "Mock deploy — promote the immutable image digest, run smoke checks, then record deployment metadata."
