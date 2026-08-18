@@ -249,7 +249,81 @@ describe("coding exercises", () => {
       expect(items).toEqual(originalItems);
     });
   });
-  it.todo("06 maps member API data", () => expect(toMemberSummary({ user: { first_name: "Alex", last_name: "Morgan" }, membership: null, vehicles: [] })).toEqual({ displayName: "Alex Morgan", tier: "None", vehicleLabels: [] }));
+  describe("06 toMemberSummary", () => {
+    it("maps a member without a membership", () => {
+      expect(
+        toMemberSummary({
+          user: { first_name: "Alex", last_name: "Morgan" },
+          membership: null,
+          vehicles: [],
+        }),
+      ).toEqual({
+        displayName: "Alex Morgan",
+        tier: "None",
+        vehicleLabels: [],
+      });
+    });
+
+    it("maps an existing membership and multiple vehicles", () => {
+      expect(
+        toMemberSummary({
+          user: { first_name: "Alex", last_name: "Morgan" },
+          membership: { tier: "Premium" },
+          vehicles: [
+            { make: "Mazda", model: "Miata" },
+            { make: "Subaru", model: "BRZ" },
+          ],
+        }),
+      ).toEqual({
+        displayName: "Alex Morgan",
+        tier: "Premium",
+        vehicleLabels: ["Mazda Miata", "Subaru BRZ"],
+      });
+    });
+
+    it("trims the display name when one name part is empty", () => {
+      expect(
+        toMemberSummary({
+          user: { first_name: "", last_name: "Morgan" },
+          membership: null,
+          vehicles: [],
+        }).displayName,
+      ).toBe("Morgan");
+    });
+
+    it("preserves underscores that are part of a name value", () => {
+      expect(
+        toMemberSummary({
+          user: { first_name: "Mary_Jane", last_name: "Watson" },
+          membership: null,
+          vehicles: [],
+        }).displayName,
+      ).toBe("Mary_Jane Watson");
+    });
+
+    it("preserves an explicitly provided empty tier", () => {
+      expect(
+        toMemberSummary({
+          user: { first_name: "Alex", last_name: "Morgan" },
+          membership: { tier: "" },
+          vehicles: [],
+        }).tier,
+      ).toBe("");
+    });
+
+    it("does not mutate the API response", () => {
+      const input = {
+        user: { first_name: "Alex", last_name: "Morgan" },
+        membership: { tier: "Premium" },
+        vehicles: [{ make: "Mazda", model: "Miata" }],
+      };
+      const originalInput = structuredClone(input);
+
+      toMemberSummary(input);
+
+      expect(input).toEqual(originalInput);
+    });
+  });
   it.todo("07 returns all validation errors", () => expect(validateVehicleForm({ year: "1800", make: "", model: "Miata" }, 2026)).toMatchObject({ year: expect.any(String), make: expect.any(String) }));
   it.todo("08 expires cache entries", () => { let now = 0; const cache = createTtlCache<number>(2, () => now); cache.set("a", 1, 10); now = 11; expect(cache.get("a")).toBeUndefined(); });
   it.todo("09 preserves order under concurrency", async () => expect(mapWithConcurrency([3,1,2], 2, async (n) => n * 2)).resolves.toEqual([6,2,4]));
