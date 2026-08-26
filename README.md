@@ -30,7 +30,7 @@ src/server/          auth, database, validation, repositories, services, observa
 prisma/              schema, migrations, and realistic seed data
 tests/               unit, RTL, and database integration tests
 e2e/                 focused Playwright member journey
-practice/            coding, debugging, incident, and security labs
+practice/            coding, GraphQL/Node, debugging, incident, and security labs
 docs/                systems, operations, testing, and interview guides
 infra/               AWS architecture and Terraform scaffold
 .github/workflows/   CI and mock deployment stage
@@ -110,6 +110,8 @@ The multi-stage image runs as a non-root user, uses Next.js standalone output, a
 | `npm run test:e2e` | Playwright Chromium journey |
 | `npm run test:e2e:ui` | Playwright UI mode |
 | `npm run test:practice` | Coding exercise/reference suite |
+| `pnpm test:graphql-practice` | Intentionally red GraphQL/Node Vehicle API practice suite |
+| `pnpm test:graphql-practice:watch` | Watch the GraphQL/Node practice tests |
 | `npm run prisma:migrate` | Create/apply a development migration |
 | `npm run prisma:seed` | Load deterministic sample data |
 | `npm run db:studio` | Open Prisma Studio |
@@ -141,6 +143,10 @@ Do not apply: the scaffold creates chargeable AWS resources. Read `infra/terrafo
 ## How to use the practice environment
 
 Start with `PRACTICE_GUIDE.md`, keep DevTools open, and treat each TODO as an interview prompt. Capture evidence before changing practice faults. Incident/security labs omit answers; ask for a guided review only after writing your hypothesis. Coding reference solutions are intentionally separated.
+
+The standalone [GraphQL + Node.js Vehicle API lab](practice/graphql-node/README.md)
+contains compile-safe scaffolds and intentionally failing contract tests for
+GraphQL, Prisma/PostgreSQL, auth, authorization, observability, and batching.
 
 The base app uses fictional content and no Hagerty branding or proprietary data.
 # driverhub-practice-repo

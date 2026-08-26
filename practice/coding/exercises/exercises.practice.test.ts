@@ -324,9 +324,97 @@ describe("coding exercises", () => {
       expect(input).toEqual(originalInput);
     });
   });
-  it.todo("07 returns all validation errors", () => expect(validateVehicleForm({ year: "1800", make: "", model: "Miata" }, 2026)).toMatchObject({ year: expect.any(String), make: expect.any(String) }));
-  it.todo("08 expires cache entries", () => { let now = 0; const cache = createTtlCache<number>(2, () => now); cache.set("a", 1, 10); now = 11; expect(cache.get("a")).toBeUndefined(); });
-  it.todo("09 preserves order under concurrency", async () => expect(mapWithConcurrency([3,1,2], 2, async (n) => n * 2)).resolves.toEqual([6,2,4]));
+  it("07 returns all validation errors", () => expect(validateVehicleForm({ year: "1800", make: "", model: "Miata" }, 2026)).toMatchObject({ year: expect.any(String), make: expect.any(String) }));
+  describe("08 createTtlCache", () => {
+    it("returns a value before expiry and expires at the exact boundary", () => {
+      let now = 100;
+      const cache = createTtlCache<number>(2, () => now);
+
+      cache.set("a", 1, 10);
+      now = 109;
+      expect(cache.get("a")).toBe(1);
+
+      now = 110;
+      expect(cache.get("a")).toBeUndefined();
+    });
+
+    it("deletes entries and reports whether the key existed", () => {
+      const cache = createTtlCache<number>(2);
+      cache.set("a", 1, 100);
+
+      expect(cache.delete("a")).toBe(true);
+      expect(cache.delete("a")).toBe(false);
+      expect(cache.get("a")).toBeUndefined();
+    });
+
+    it("reports only unexpired entries in size", () => {
+      let now = 0;
+      const cache = createTtlCache<number>(3, () => now);
+
+      cache.set("short", 1, 5);
+      cache.set("long", 2, 20);
+      expect(cache.size).toBe(2);
+
+      now = 5;
+      expect(cache.size).toBe(1);
+
+      cache.delete("long");
+      expect(cache.size).toBe(0);
+    });
+
+    it("overwrites an existing value and resets its TTL", () => {
+      let now = 0;
+      const cache = createTtlCache<number>(2, () => now);
+
+      cache.set("a", 1, 10);
+      now = 5;
+      cache.set("a", 2, 20);
+
+      now = 10;
+      expect(cache.get("a")).toBe(2);
+      expect(cache.size).toBe(1);
+
+      now = 25;
+      expect(cache.get("a")).toBeUndefined();
+    });
+
+    it("evicts the least recently used entry at capacity", () => {
+      const cache = createTtlCache<number>(2, () => 0);
+
+      cache.set("a", 1, 100);
+      cache.set("b", 2, 100);
+      expect(cache.get("a")).toBe(1);
+
+      cache.set("c", 3, 100);
+
+      expect(cache.get("b")).toBeUndefined();
+      expect(cache.get("a")).toBe(1);
+      expect(cache.get("c")).toBe(3);
+    });
+
+    it("removes expired entries before evicting a valid entry", () => {
+      let now = 0;
+      const cache = createTtlCache<number>(2, () => now);
+
+      cache.set("long", 1, 100);
+      cache.set("short", 2, 1);
+      now = 2;
+      cache.set("new", 3, 100);
+
+      expect(cache.get("long")).toBe(1);
+      expect(cache.get("short")).toBeUndefined();
+      expect(cache.get("new")).toBe(3);
+      expect(cache.size).toBe(2);
+    });
+
+    it.each([0, -1, 1.5])(
+      "rejects an invalid maxEntries value: %s",
+      (maxEntries) => {
+        expect(() => createTtlCache(maxEntries)).toThrow(RangeError);
+      },
+    );
+  });
+  it("09 preserves order under concurrency", async () => expect(mapWithConcurrency([3,1,2], 2, async (n) => n * 2)).resolves.toEqual([6,2,4]));
   it.todo("10 rejects on timeout", async () => { vi.useFakeTimers(); const result = withTimeout(new Promise(() => undefined), 10); vi.advanceTimersByTime(10); await expect(result).rejects.toBeInstanceOf(TimeoutError); vi.useRealTimers(); });
   it.todo("11 includes overlapping event boundaries", () => expect(filterEventsByDate([{ id: "1", startDate: "2026-08-10", endDate: "2026-08-12" }], new Date("2026-08-12"), new Date("2026-08-14"))).toHaveLength(1));
   it.todo("12 merges in precedence order", () => expect(mergePreferences({ emailEnabled: true, smsEnabled: false, eventReminders: true, marketingEnabled: false }, { emailEnabled: false }, { smsEnabled: true })).toMatchObject({ emailEnabled: false, smsEnabled: true }));
