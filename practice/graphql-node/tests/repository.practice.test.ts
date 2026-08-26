@@ -81,8 +81,13 @@ describe("PrismaVehicleRepository", () => {
     );
   });
 
-  it.todo("updates only when id and userId match");
-  it.todo("deletes only when id and userId match");
-  it.todo("translates a Prisma connectivity failure without leaking its URL");
+  it.todo(
+    "updateOwned includes id and userId in the write, returns the updated vehicle on one match, and null on no match",
+  );
+  it.todo(
+    "deleteOwned includes id and userId in one write and converts affected-row count to a boolean",
+  );
+  it.todo(
+    "a Prisma connectivity failure becomes DatabaseUnavailableError without exposing a connection URL",
+  );
 });
-
