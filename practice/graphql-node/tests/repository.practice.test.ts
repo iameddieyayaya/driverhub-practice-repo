@@ -65,6 +65,31 @@ describe("PrismaVehicleRepository", () => {
     });
   });
 
+  it("finds a vehicle by id and selects only API fields", async () => {
+    const { db, vehicleDelegate } = prismaDouble();
+    const repository = new PrismaVehicleRepository(db);
+
+    await expect(repository.findById("vehicle-1")).resolves.toEqual(vehicle);
+    expect(vehicleDelegate.findUnique).toHaveBeenCalledWith({
+      where: { id: "vehicle-1" },
+      select: {
+        id: true,
+        year: true,
+        make: true,
+        model: true,
+        userId: true,
+      },
+    });
+  });
+
+  it("returns null when a vehicle id does not exist", async () => {
+    const { db, vehicleDelegate } = prismaDouble();
+    vehicleDelegate.findUnique.mockResolvedValueOnce(null);
+    const repository = new PrismaVehicleRepository(db);
+
+    await expect(repository.findById("missing-vehicle")).resolves.toBeNull();
+  });
+
   it("creates a vehicle with its authenticated owner", async () => {
     const { db, vehicleDelegate } = prismaDouble();
     const repository = new PrismaVehicleRepository(db);
